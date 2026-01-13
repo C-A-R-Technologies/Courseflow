@@ -1,0 +1,11 @@
+# Allow Googlebot to crawl everything
+User-agent: Googlebot
+Allow: /
+
+# Allow Bingbot to crawl everything
+User-agent: Bingbot
+Allow: /
+
+# Disallow all other bots from crawling anything
+User-agent: *
+Disallow: /
