@@ -20,11 +20,8 @@ jobs:
     - name: Install dependencies
       run: bun install --frozen-lockfile
     
-    - name: Generate Paraglide files
-      run: bunx @inlang/paraglide-js@latest compile
-    
     - name: Run type checking
-      run: bun run check
+      run: bunx @inlang/paraglide-js@latest compile && bun run check
     
     - name: Build project
       run: bun run build
