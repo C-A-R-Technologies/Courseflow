@@ -1,8 +1,5 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-    const msg = "hi"
-	return {
-        message: msg
-    }
+
 };

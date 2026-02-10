@@ -9,7 +9,10 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-{@render children()}
+<div class="bg-background font-">
+	{@render children()}
+</div>
+
 <div style="display:none">
 	{#each locales as locale}
 		<a

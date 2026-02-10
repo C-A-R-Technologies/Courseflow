@@ -1,10 +1,8 @@
 <script lang="ts">
     import type { PageProps } from "./$types";
     const { data }: PageProps = $props();
-    const { message } = data;
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-
-<h1 class="text-9xl text-black">this message says: {message}</h1>
+<div class="flex justify-center items-center h-screen">
+    <h1 class="text-4xl font-bold">Welcome to Courseflow</h1>
+</div>
