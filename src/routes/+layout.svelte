@@ -4,11 +4,14 @@
 	import "./layout.css";
 	import favicon from "$lib/assets/favicon.svg";
 	import Header from "$lib/components/header.svelte";
+	import { Toaster } from "$lib/components/ui/sonner/index";
 
 	let { children } = $props();
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
+
+<Toaster position="bottom-right" richColors/>
 
 <div class="bg-background">
 	<Header />
@@ -22,3 +25,12 @@
 		</a>
 	{/each}
 </div>
+
+<footer
+	class="border-t border-border py-10 text-center text-sm text-muted-foreground"
+>
+	<p>&copy; 2026 Courseflow. All rights reserved.</p>
+	<p class="mt-1">
+		Courseflow is a SNHU capstone project by Avery, Cam, and Rikuto.
+	</p>
+</footer>
