@@ -15,7 +15,7 @@ Courseflow also uses [Paraglide](https://inlang.com/m/gerre34r/library-inlang-pa
 As of now, the backend of Courseflow hasn't been connected and set up. The good news is that setup is easier.
 
 #### Prerequisites
-You will need Node JS (recommended major version: 25), Git, and [Bun](https://bun.com/) installed globally (just follow [this guide to install it through NPM](https://bun.com/docs/installation)).
+You will need Node JS (recommended major version: 25), Git, and [Bun](https://bun.com/) installed globally (just follow [this guide to install it through NPM](https://bun.com/docs/installation#package-managers)).
 
 With those installed, you can proceed to setup the project.
 
