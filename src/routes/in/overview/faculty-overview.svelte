@@ -220,7 +220,7 @@
 </section>
 
 <!-- Info card -->
-<section class="w-full mb-10">
+<section class="w-full mb-10 sr-only">
     <Card.Root class="bg-muted/50">
         <Card.Header>
             <Card.Title class="text-base">About course evaluations</Card.Title>

@@ -3,7 +3,9 @@
     import * as Card from "$lib/components/ui/card/index.js";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { Progress } from "$lib/components/ui/progress/index.js";
+    import * as Collapsible from "$lib/components/ui/collapsible/index.js";
     import { toast } from "svelte-sonner";
+    import ChevronRight from "@lucide/svelte/icons/chevron-right";
 
     const { user }: { user: User } = $props();
 
@@ -71,7 +73,7 @@
                 <Card.Root
                     class="border-green-500/30 transition-colors hover:border-green-500/60"
                     onclick={() =>
-                        (window.location.href = `/in/evaluation/${evaluation.id}`)}
+                        (window.location.href = `/in/courses/${evaluation.id}/eval`)}
                 >
                     <Card.Header>
                         <Card.Title>{evaluation.course}</Card.Title>
@@ -94,83 +96,112 @@
 {/if}
 
 <section class="w-full mb-10">
-    <h2 class="text-xl font-semibold mb-3">Upcoming Evaluations</h2>
-    {#if upcomingEvaluations.length === 0}
-        <Card.Root>
-            <Card.Content class="py-8 text-center">
-                <p class="text-muted-foreground">
-                    No upcoming evaluations right now.
-                </p>
-            </Card.Content>
-        </Card.Root>
-    {:else}
-        <div class="grid gap-4 sm:grid-cols-2">
-            {#each upcomingEvaluations as evaluation}
-                <Card.Root
-                    class="transition-colors hover:border-primary/40"
-                    onclick={() => toast.warning("Evaluation not open yet")}
-                >
-                    <Card.Header>
-                        <Card.Title>{evaluation.course}</Card.Title>
-                        <Card.Description>
-                            Section {evaluation.section} &middot;
-                            {evaluation.instructor}
-                        </Card.Description>
-                    </Card.Header>
-                    <Card.Footer>
-                        <span class="text-sm text-muted-foreground">
-                            Opens {evaluation.opensDate}
-                        </span>
-                    </Card.Footer>
+    <Collapsible.Root open={true}>
+        <Collapsible.Trigger
+            class="flex items-center gap-2 mb-3 group cursor-pointer"
+        >
+            <ChevronRight
+                class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
+            />
+            <h2 class="text-xl font-semibold">Upcoming Evaluations</h2>
+        </Collapsible.Trigger>
+        <Collapsible.Content>
+            {#if upcomingEvaluations.length === 0}
+                <Card.Root>
+                    <Card.Content class="py-8 text-center">
+                        <p class="text-muted-foreground">
+                            No upcoming evaluations right now.
+                        </p>
+                    </Card.Content>
                 </Card.Root>
-            {/each}
-        </div>
-    {/if}
+            {:else}
+                <div class="grid gap-4 sm:grid-cols-2">
+                    {#each upcomingEvaluations as evaluation}
+                        <Card.Root
+                            class="transition-colors hover:border-primary/40"
+                            onclick={() =>
+                                toast.warning(`Evaluation for ${evaluation.course}\nisn't open yet`)}
+                        >
+                            <Card.Header>
+                                <Card.Title>{evaluation.course}</Card.Title>
+                                <Card.Description>
+                                    Section {evaluation.section} &middot;
+                                    {evaluation.instructor}
+                                </Card.Description>
+                            </Card.Header>
+                            <Card.Footer>
+                                <span class="text-sm text-muted-foreground">
+                                    Opens {evaluation.opensDate}
+                                </span>
+                            </Card.Footer>
+                        </Card.Root>
+                    {/each}
+                </div>
+            {/if}
+        </Collapsible.Content>
+    </Collapsible.Root>
 </section>
 
 <section class="w-full mb-10">
-    <h2 class="text-xl font-semibold mb-3">Past Evaluations</h2>
-    {#if pastEvaluations.length === 0}
-        <Card.Root>
-            <Card.Content class="py-8 text-center">
-                <p class="text-muted-foreground">No past evaluations yet.</p>
-            </Card.Content>
-        </Card.Root>
-    {:else}
-        <div class="grid gap-4 sm:grid-cols-2">
-            {#each pastEvaluations as evaluation}
-                <Card.Root class="opacity-80">
-                    <Card.Header>
-                        <Card.Title class="flex items-center gap-2">
-                            {evaluation.course}
-                            {#if evaluation.submitted}
-                                <span
-                                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-                                >
-                                    Submitted
-                                </span>
-                            {:else}
-                                <span
-                                    class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
-                                >
-                                    Missed
-                                </span>
-                            {/if}
-                        </Card.Title>
-                        <Card.Description>
-                            Section {evaluation.section} &middot;
-                            {evaluation.instructor}
-                        </Card.Description>
-                    </Card.Header>
-                    <Card.Footer>
-                        <span class="text-sm text-muted-foreground">
-                            Completed {evaluation.completedDate}
-                        </span>
-                    </Card.Footer>
+    <Collapsible.Root open={false}>
+        <Collapsible.Trigger
+            class="flex items-center gap-2 mb-3 group cursor-pointer"
+        >
+            <ChevronRight
+                class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90"
+            />
+            <h2 class="text-xl font-semibold">Past Evaluations</h2>
+        </Collapsible.Trigger>
+        <Collapsible.Content>
+            {#if pastEvaluations.length === 0}
+                <Card.Root>
+                    <Card.Content class="py-8 text-center">
+                        <p class="text-muted-foreground">
+                            No past evaluations yet.
+                        </p>
+                    </Card.Content>
                 </Card.Root>
-            {/each}
-        </div>
-    {/if}
+            {:else}
+                <div class="grid gap-4 sm:grid-cols-2">
+                    {#each pastEvaluations as evaluation}
+                        <Card.Root
+                            class="opacity-80"
+                            onclick={() =>
+                                toast.warning(`You've already submitted an evaluation for ${evaluation.course}`)}
+                        >
+                            <Card.Header>
+                                <Card.Title class="flex items-center gap-2">
+                                    {evaluation.course}
+                                    {#if evaluation.submitted}
+                                        <span
+                                            class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                                        >
+                                            Submitted
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
+                                        >
+                                            Missed
+                                        </span>
+                                    {/if}
+                                </Card.Title>
+                                <Card.Description>
+                                    Section {evaluation.section} &middot;
+                                    {evaluation.instructor}
+                                </Card.Description>
+                            </Card.Header>
+                            <Card.Footer>
+                                <span class="text-sm text-muted-foreground">
+                                    Completed {evaluation.completedDate}
+                                </span>
+                            </Card.Footer>
+                        </Card.Root>
+                    {/each}
+                </div>
+            {/if}
+        </Collapsible.Content>
+    </Collapsible.Root>
 </section>
 
 <Separator class="mb-10" />
@@ -204,7 +235,7 @@
     </div>
 </section>
 
-<section class="w-full mb-10">
+<section class="w-full mb-10 sr-only">
     <Card.Root class="bg-muted/50">
         <Card.Header>
             <Card.Title class="text-base">Why evaluations matter</Card.Title>
