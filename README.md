@@ -15,7 +15,7 @@ Courseflow also uses [Paraglide](https://inlang.com/m/gerre34r/library-inlang-pa
 Setting up Courseflow in an development environment is fairly easy.
 
 > [!IMPORTANT]
-> You'll need the following prerequisites: Node JS (recommended major version: 25), Git, and [Bun](https://bun.com/) installed globally (just follow [this guide to install it through NPM](https://bun.com/docs/installation#package-managers)). You'll also need (Docker)[https://www.docker.com/products/docker-desktop/] installed and running.
+> You'll need the following prerequisites: Node JS (recommended major version: 25), Git, and [Bun](https://bun.com/) installed globally (just follow [this guide to install it through NPM](https://bun.com/docs/installation#package-managers)). You'll also need [Docker](https://www.docker.com/products/docker-desktop/) installed and running.
 
 First, clone this repository:
 ```
