@@ -1,5 +1,11 @@
-import type { LayoutServerLoad } from './$types';
+import { sql } from "$lib/server/postgres";
+import { redirect } from "@sveltejs/kit";
+import type { LayoutServerLoad } from "./$types";
 
-export const load: LayoutServerLoad = async () => {
-	// TODO: if not logged in, redirect to login page
+export const load: LayoutServerLoad = async ({ locals }) => {
+    if (!locals.user) redirect(303, "/login");
+
+    return {
+        user: locals.user!,
+    };
 };
