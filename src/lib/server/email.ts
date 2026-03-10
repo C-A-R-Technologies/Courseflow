@@ -16,7 +16,7 @@ export const transporter = privateEnv.smtp
 export async function sendEmail({ to, subject, text, html }: Mail.Options) {
     return privateEnv.smtp && transporter
         ? transporter.sendMail({
-              from: privateEnv.smtp.from,
+              from: privateEnv.smtp.fromAddress, // TODO test
               to,
               subject,
               text,
