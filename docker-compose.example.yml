@@ -1,0 +1,19 @@
+services:
+  cfdb:
+    image: postgres:18.0-alpine
+    ports:
+      - "5430:5432" # This should match your .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/lib/server/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment: # These should also match your .env (obviously)
+      POSTGRES_USER: your_postgres_username
+      POSTGRES_PASSWORD: your_postgres_password_that_probably_should_be_secure_ish
+      POSTGRES_DB: your_postgres_database_name
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U penmen -d cfdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  pgdata:

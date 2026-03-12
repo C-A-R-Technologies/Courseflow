@@ -9,32 +9,42 @@
 
 	let {
 		ref = $bindable(null),
-		opts = {},
-		plugins = [],
+		opts: _opts = {},
+		plugins: _plugins = [],
 		setApi = () => {},
-		orientation = "horizontal",
+		orientation: _orientation = "horizontal",
 		class: className,
 		children,
 		...restProps
 	}: WithElementRef<CarouselProps> = $props();
 
-	let carouselState = $state<EmblaContext>({
-		api: undefined,
-		scrollPrev,
-		scrollNext,
-		orientation,
-		canScrollNext: false,
-		canScrollPrev: false,
-		handleKeyDown,
-		options: opts,
-		plugins,
-		onInit,
-		scrollSnaps: [],
-		selectedIndex: 0,
-		scrollTo,
-	});
+	const opts = $derived(_opts);
+	const plugins = $derived(_plugins);
+	const orientation = $derived(_orientation);
 
-	setEmblaContext(carouselState);
+	let carouselState = $state<EmblaContext>({
+        api: undefined,
+        scrollPrev,
+        scrollNext,
+        orientation: "horizontal",
+        canScrollNext: false,
+        canScrollPrev: false,
+        handleKeyDown,
+        options: {},
+        plugins: [],
+        onInit,
+        scrollSnaps: [],
+        selectedIndex: 0,
+        scrollTo,
+    });
+
+    setEmblaContext(carouselState);
+
+    $effect(() => {
+        carouselState.orientation = orientation;
+        carouselState.options = opts;
+        carouselState.plugins = plugins;
+    });
 
 	function scrollPrev() {
 		carouselState.api?.scrollPrev();

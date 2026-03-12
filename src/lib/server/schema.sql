@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     lastname VARCHAR(100) NOT NULL,
     role VARCHAR(7) NOT NULL DEFAULT 'student',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS terms (
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS terms (
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -35,5 +35,5 @@ CREATE TABLE IF NOT EXISTS sections (
     course_id UUID REFERENCES courses(id) NOT NULL,
     term_id UUID REFERENCES terms(id) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

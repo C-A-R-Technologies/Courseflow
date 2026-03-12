@@ -7,7 +7,7 @@
 
     const { text, tag = "span", class: className = "" }: Props = $props();
 
-    const characters = text.split("");
+    let characters = $derived(text.split(""));
 </script>
 
 <svelte:element this={tag} class={className}>
