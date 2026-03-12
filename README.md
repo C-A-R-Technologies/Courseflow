@@ -36,7 +36,7 @@ Once they're renamed, go ahead and spin up that postgres container:
 docker compose up
 ```
 > [!TIP]
-> This spins up the container with your terminal attached to the logs. Once you've confirmed its running without error, add the `-d` to *detach* your terminal from the logs on spin-up.
+> This spins up the container with your terminal attached to the logs. Once you've confirmed its running without error, add the `-d` flag to *detach* your terminal from the logs on spin-up.
 
 Finally, run the development server:
 ```
