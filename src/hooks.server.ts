@@ -18,72 +18,40 @@ const handleParaglide: Handle = ({ event, resolve }) => paraglideMiddleware(even
 export const init: ServerInit = async () => {
 	if (privateEnv.init.email && privateEnv.init.password) {
 		const { email, password } = privateEnv.init;
-		const init_name = "Coursey McCourseFlow";
-		const init_id = "0000000";
+		const init_firstname = "Coursey";
+		const init_lastname = "McCourseFlow";
 		const init_role = "admin"; // Don't change
 
 		async function init() {
 			const hashedPassword = await hashPassword(password);
 
-			// await sql`
-            //     INSERT INTO students (email, student_id, name)
-            //     VALUES (
-            //         ${email},
-            //         ${init_id},
-            //         ${init_name}
-            //     )
-            //     ON CONFLICT DO NOTHING
-            // `;
+			const result = await sql`
+                INSERT INTO users (email, firstname, lastname, role, password_hash, created_at, updated_at)
+                VALUES (
+                    ${email},
+                    ${init_firstname},
+                    ${init_lastname},
+                    ${init_role},
+                    ${hashedPassword},
+					now(),
+					now()
+                )
+                ON CONFLICT DO NOTHING
+                RETURNING *
+            `;
 
-			// const result = await sql`
-            //     INSERT INTO users (email, student_id, name, role, password_hash, request_reason)
-            //     VALUES (
-            //         ${email},
-            //         ${init_id},
-            //         ${init_name},
-            //         ${init_role},
-            //         ${hashedPassword},
-            //         'Initial Penpoint admin user.'
-            //     )
-            //     ON CONFLICT DO NOTHING
-            //     RETURNING *
-            // `;
-
-			// if (result.length > 0) {
-			// 	console.log(
-			// 		"Created an admin user with the email provided in the PENPOINT_INIT_EMAIL environment variable.",
-			// 	);
-			// 	// Create SGA
-			// 	const clubResult = await sql`
-            //         INSERT INTO clubs (id, name, acronym, governing_board)
-            //         VALUES (
-            //             '5f92e1a1-5be4-4cc3-8c96-0ff12dbf6e5a',
-            //             'Student Government Association',
-            //             'SGA',
-            //             true
-            //         )
-            //         ON CONFLICT DO NOTHING
-            //         RETURNING id
-            //     `;
-			// 	// Assign our default user to SGA
-			// 	await sql`
-            //         INSERT INTO club_users (position, user_id, club_id)
-            //         VALUES (
-            //             'Pride Admin',
-            //             ${result[0].id},
-            //             ${clubResult[0].id}
-            //         )
-            //         ON CONFLICT DO NOTHING
-            //     `;
-			// 	console.log("Created the SGA club and assigned the initial admin user.");
-			// 	// Load test data
-			// 	const file = fs.readFileSync("./src/lib/utils/testdata.sql", "utf8");
-			// 	await db.unsafe(file);
-			// 	console.log("Loaded test data");
-			// } else
-			// 	console.warn(
-			// 		"A user with the email provided in the PENPOINT_INIT_EMAIL environment variable already exists.",
-			// 	);
+			if (result.length > 0) {
+				console.log(
+					"Created an admin user with the email provided in the INIT_EMAIL environment variable.",
+				);
+				// Load test data
+				// const file = fs.readFileSync("./src/lib/utils/testdata.sql", "utf8");
+				// await db.unsafe(file);
+				// console.log("Loaded test data");
+			} else
+				console.warn(
+					"A user with the email provided in the INIT_EMAIL environment variable already exists.",
+				);
 		}
 
 		init().catch(console.error);
@@ -106,8 +74,8 @@ export const auth = (async ({ event, resolve }) => {
 		if (payload) {
 			const users = await sql`
                 SELECT *
-                FROM users u
-                WHERE u.id = ${payload.sub} AND u.role IS DISTINCT FROM 'unapproved'
+                FROM users
+                WHERE id = ${payload.sub}
                 LIMIT 1
             `.catch(() => []);
 

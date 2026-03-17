@@ -5,7 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE NOT NULL,
     firstname VARCHAR(100) NOT NULL,
     lastname VARCHAR(100) NOT NULL,
-    role VARCHAR(7) NOT NULL DEFAULT 'student',
+    role VARCHAR(11) NOT NULL DEFAULT 'student', -- 'student', 'instructor', 'dean' or 'admin'
+    password_hash TEXT,
+    password_reset_last_requested_at TIMESTAMPTZ DEFAULT NULL,
+    last_login TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
