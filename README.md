@@ -43,10 +43,4 @@ Finally, run the development server:
 bun dev
 ```
 
----
-
-> [!WARNING]
-> The following setup information is not fully implemented.
-> (Authentication hasn't been fully implemented, as of 3/10/26.)
-
-On spin up, the site should automatically initialize an admin account, with the login information specified in your `.env`.
+On spin up, the site should automatically initialize the the database as well as the admin account with the login information specified in your `.env`. You'll be able to login at `http://localhost:5173/login` with those credentials.
