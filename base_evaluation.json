@@ -1,0 +1,226 @@
+{
+    "file_created_at": {
+        "year": 2026,
+        "month": 3,
+        "day": 26
+    },
+    "evaluation_updated_at": {
+        "year": 2025,
+        "month": 11,
+        "day": 3
+    },
+    "questions": [
+    {
+      "undergraduate": [
+        {
+            "course": [
+                {
+                    "id": "7b469f2a-1a34-4afc-8a8d-6cb855bb8e14",
+                    "index": 0,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "Course content accurately reflected the course objectives and the syllabus",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "80bb3a57-0061-4694-9cba-9b310c0c2542",
+                    "index": 1,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The course content was appropriate for the level of the course",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "fcdb6b8f-077e-41ca-825b-486d24052303",
+                    "index": 2,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "This course increased my knowledge of the subject",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "25afe6e7-d3b2-4cef-979e-2f328718df63",
+                    "index": 3,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "Textbook or primary instructional materials helped me understand the content of the course",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "a0c16a42-fca5-490e-a939-708c36f3e867",
+                    "index": 4,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "Supplemental instructional resources (use of Brightspace, case studies, additional readings, etc.) helped me understand the course content",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "1c5a9e93-0dab-4dd7-8c87-f3f69a80aaa1",
+                    "index": 5,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "I would recommend this course to other students",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "278bdde0-199a-468b-a91a-5e373b67fbaa",
+                    "index": 6,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "I would recommend this course to other students",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "ffb57f77-caf6-4185-bb93-22d2082a2ecc",
+                    "index": 7,
+                    "type": "yes_no",
+                    "required": true,
+                    "question": "Did you use the required textbook/materials for the course at least once?",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "3ee9a79a-4b19-425f-a597-84fb8fb404c2",
+                    "index": 8,
+                    "type": "yes_no",
+                    "required": true,
+                    "question": "Did you use the required textbook/materials for the course at least once?",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "d463e205-fb23-48cd-bd50-0d6ac24e8e92",
+                    "index": 9,
+                    "type": "text",
+                    "required": false,
+                    "question": "Comments about the course",
+                    "notes": ""
+                }
+            ],
+            "instructor": [
+                {
+                    "id": "d846207c-5114-43f4-a069-87da932b6227",
+                    "index": 0,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor used a variety of methods to assess student learning",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "4d078a40-4250-46c8-af03-7eed347a492b",
+                    "index": 1,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor engaged students in the learning process",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "70ca4244-31cd-490e-ab78-fc6ee4ab2f8e",
+                    "index": 2,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor set appropriately high expectations for students",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "d001a23b-fdca-4580-8a22-ab211f623b5d",
+                    "index": 3,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor provided opportunities for students to assume responsiblity for their own learning",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "30d9749d-a480-4569-8e28-ed4fd0a45049",
+                    "index": 4,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor demonstrated respect for students",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "6f31414e-8724-4c13-9fe3-06d0a02bea8e",
+                    "index": 5,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor demonstrated in-depth knowledge of the course materials",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "371a336e-4783-4baf-b55e-a38f4c0d6bea",
+                    "index": 6,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor presented course content clearly",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "b13c4622-14d3-413c-a7c0-613cd7f46cb9",
+                    "index": 7,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor presented course content clearly",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "d233cab5-516d-4254-8da9-96e4f4e5dc0d",
+                    "index": 8,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor was well-prepared",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "4e37c911-c858-43bb-983f-f27fba0073d2",
+                    "index": 9,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "The instructor was accessible to students outside of class",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "b2b128ec-a9c3-490c-b207-646fee1b1b96",
+                    "index": 10,
+                    "type": "agreement_scale",
+                    "required": true,
+                    "question": "I would recommend this instructor to other students",
+                    "notes": "Used since 15SPDAY"
+                },
+                {
+                    "id": "d463e205-fb23-48cd-bd50-0d6ac24e8e92",
+                    "index": 11,
+                    "type": "text",
+                    "required": false,
+                    "question": "Comments about the instructor",
+                    "notes": ""
+                }
+            ],
+            "library": [
+                {
+                    "id": "b2b128ec-a9c3-490c-b207-646fee1b1b96",
+                    "index": 0,
+                    "type": "yes_no",
+                    "required": false,
+                    "question": "Did the resources (databases, books, etc.) and services (research assistance, makerspace, etc.) provided by the Shapiro Library meet your needs during this course?",
+                    "notes": "Added to all UG evaluations"
+                },
+                {
+                    "id": "d463e205-fb23-48cd-bd50-0d6ac24e8e92",
+                    "index": 1,
+                    "type": "text",
+                    "required": false,
+                    "question": "If yes, what did you find most helpful? If no, how could we improve?",
+                    "notes": "Added to all UG evaluations"
+                }
+            ]
+        }
+
+      ],
+      "graduate": [
+        {
+            "course": {
+                
+            }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { privateEnv } from "$lib/env/private";
+import { publicEnv } from "$lib/env/public";
 import { User } from "$lib/models";
 import { hashPassword, verifyToken } from "$lib/server/auth";
 import { db, sql } from "$lib/server/postgres";
@@ -59,6 +60,88 @@ export const init: ServerInit = async () => {
 
 	if (privateEnv.smtp) console.log("SMTP is configured for outgoing emails.");
 	else console.warn("SMTP is not fully configured. Outgoing emails will not be sent.");
+
+	if (publicEnv.init_evaluation_json) {
+		const filePath = publicEnv.init_evaluation_json;
+		try {
+			await sql`ALTER TABLE questions ALTER COLUMN school_id DROP NOT NULL`;
+
+			if (fs.existsSync(filePath)) {
+				const evaluationData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+				const seedQuestions: Array<{
+					category: string;
+					index: number;
+					type: string;
+					required: boolean;
+					question: string;
+					notes: string | null;
+				}> = [];
+
+				const questionSets = Array.isArray(evaluationData?.questions) ? evaluationData.questions : [];
+
+				for (const questionSet of questionSets) {
+					if (!questionSet || typeof questionSet !== "object") continue;
+
+					for (const levelSections of Object.values(questionSet)) {
+						if (!Array.isArray(levelSections)) continue;
+
+						for (const section of levelSections) {
+							if (!section || typeof section !== "object") continue;
+
+							for (const [category, categoryQuestions] of Object.entries(section)) {
+								if (!["course", "instructor", "library"].includes(category)) continue;
+								if (!Array.isArray(categoryQuestions)) continue;
+
+								for (const question of categoryQuestions) {
+									if (!question || typeof question !== "object") continue;
+
+									const q = question as any;
+									if (typeof q.index !== "number") continue;
+									if (!["agreement_scale", "yes_no", "text"].includes(String(q.type))) continue;
+									if (typeof q.required !== "boolean") continue;
+									if (typeof q.question !== "string") continue;
+
+									seedQuestions.push({
+										category,
+										index: q.index,
+										type: String(q.type),
+										required: q.required,
+										question: q.question,
+										notes: typeof q.notes === "string" && q.notes.trim() ? q.notes : null,
+									});
+								}
+							}
+						}
+					}
+				}
+
+				if (seedQuestions.length === 0) {
+					console.warn(`No valid questions found in ${filePath}; skipping question initialization.`);
+				} else {
+					const existing = await sql`SELECT 1 FROM questions LIMIT 1`;
+
+					if (existing.length > 0) {
+						console.log("Questions already exist; skipping question initialization.");
+					} else {
+						for (const q of seedQuestions) {
+							await sql`
+								INSERT INTO questions (index, category, type, required, question, notes)
+								VALUES (${q.index}, ${q.category}, ${q.type}, ${q.required}, ${q.question}, ${q.notes})
+							`;
+						}
+
+						console.log(`Inserted ${seedQuestions.length} base questions.`);
+					}
+				}
+			}
+			else {
+				console.warn(`Evaluation JSON file not found at ${filePath}; skipping question initialization.`);
+			}
+		}
+		catch (err) {
+			console.error(`Failed to load evaluation JSON from ${filePath}:`, err);
+		}
+	}
 };
 
 export const auth = (async ({ event, resolve }) => {
