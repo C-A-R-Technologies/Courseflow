@@ -70,6 +70,6 @@ export type Section = z.infer<typeof Section>;
 // below are request and response schemas
 export const LoginRequest = z.object({
     email: z.email().max(100),
-    _password: Password,
+    _password: z.string().max(70), // One would think to use the password schema here, but if the password schema changed, it would lock out users with old but now invalid passwords
 });
 export type LoginRequest = z.infer<typeof LoginRequest>;

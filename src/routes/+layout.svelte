@@ -6,15 +6,16 @@
 	import Header from "$lib/components/header.svelte";
 	import { Toaster } from "$lib/components/ui/sonner/index";
 
-	let { children } = $props();
+	let { children, data } = $props();
+	let user = $derived(data.user);
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<Toaster position="bottom-right" richColors/>
+<Toaster position="bottom-right" richColors />
 
 <div class="bg-background">
-	<Header />
+	<Header {user} />
 	{@render children()}
 </div>
 

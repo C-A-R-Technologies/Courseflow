@@ -1,6 +1,14 @@
 <script lang="ts">
     import { Button } from "$lib/components/ui/button";
     import logo from "$lib/assets/Courseflow Logo v2.svg";
+    import { logout } from "$lib/functions/logout.remote";
+    import { User } from "$lib/models";
+
+    interface Props {
+        user: User | null;
+    }
+
+    const { user }: Props = $props();
 </script>
 
 <header
@@ -15,7 +23,14 @@
 
         <div class="flex gap-4">
             <Button href="/about" variant="ghost">About</Button>
-            <Button href="/login" variant="ghost">Login</Button>
+            {#if user}
+                <Button href="/in/overview" variant="ghost">Hi, {user.firstname}!</Button>
+                <form {...logout}>
+                    <Button variant="ghost" type="submit">Logout</Button>
+                </form>
+            {:else}
+                <Button href="/login" variant="ghost">Login</Button>
+            {/if}
         </div>
     </div>
 </header>

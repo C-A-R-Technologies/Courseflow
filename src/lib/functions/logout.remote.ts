@@ -17,5 +17,5 @@ export const logout = form(z.any(), async () => {
 
     console.log("Cookie deleted");
 
-    redirect(303, "/app");
+    redirect(303, "/login");
 });
