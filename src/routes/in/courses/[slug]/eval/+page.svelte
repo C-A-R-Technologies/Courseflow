@@ -1,52 +1,80 @@
 <script lang="ts">
-    import { Slider } from "$lib/components/ui/slider/index";
+    import type { PageData } from "./$types";
     import { Button } from "$lib/components/ui/button/index";
+    import { Slider } from "$lib/components/ui/slider/index";
     import { Textarea } from "$lib/components/ui/textarea/index";
     import * as Card from "$lib/components/ui/card";
     import { Progress } from "$lib/components/ui/progress/index";
     import { toast } from "svelte-sonner";
 
-    const questions = [
-        {
-            id: "overall",
-            label: "Overall Course Quality",
-            description: "How would you rate this course overall?",
-            lowLabel: "Poor",
-            highLabel: "Excellent",
-        },
-        {
-            id: "instructor",
-            label: "Instructor Effectiveness",
-            description:
-                "How effective was the instructor at teaching the material?",
-            lowLabel: "Ineffective",
-            highLabel: "Outstanding",
-        },
-        {
-            id: "materials",
-            label: "Course Materials",
-            description: "How useful were the course materials and resources?",
-            lowLabel: "Not useful",
-            highLabel: "Extremely useful",
-        },
-        {
-            id: "recommend",
-            label: "Likelihood to Recommend",
-            description:
-                "How likely are you to recommend this course to a peer?",
-            lowLabel: "Not likely",
-            highLabel: "Very likely",
-        },
-    ];
+    type Question = PageData["questions"][number];
+    type Answers = Record<
+        string,
+        { response_option_id: string | null; response_text: string }
+    >;
 
-    let answers: Record<string, number[]> = $state(
-        Object.fromEntries(questions.map((q) => [q.id, [5]])),
-    );
+    const { data }: { data: PageData } = $props();
+    const questions = $derived(data.questions);
 
-    let comment = $state("");
+    let answers = $state<Answers>({});
+
     let submitted = $state(false);
     let currentStep = $state(0);
-    const totalSteps = questions.length + 1; // questions + review
+    const totalSteps = $derived(questions.length + 1); // questions + review
+    const currentQuestion = $derived(
+        currentStep < questions.length ? questions[currentStep] : null,
+    );
+    const canProceed = $derived(
+        currentQuestion
+            ? !currentQuestion.required || isQuestionAnswered(currentQuestion)
+            : true,
+    );
+
+    $effect(() => {
+        if (Object.keys(answers).length > 0 || questions.length === 0) return;
+
+        answers = Object.fromEntries(
+            questions.map((question) => {
+                const defaultOptionId =
+                    question.response_kind === "agreement_scale"
+                        ? (question.options.find(
+                              (option) => option.numeric_score === 5,
+                          )?.id ??
+                          question.options[0]?.id ??
+                          null)
+                        : null;
+
+                return [
+                    question.id,
+                    {
+                        response_option_id: defaultOptionId,
+                        response_text: "",
+                    },
+                ];
+            }),
+        ) as Answers;
+    });
+
+    function selectedOptionLabel(question: Question): string {
+        const selectedOptionId = answers[question.id]?.response_option_id;
+        if (!selectedOptionId) return "No response yet";
+
+        const selectedOption = question.options.find(
+            (option) => option.id === selectedOptionId,
+        );
+        return selectedOption?.label ?? "No response yet";
+    }
+
+    function isQuestionAnswered(question: Question): boolean {
+        const answer = answers[question.id];
+        if (!answer) return false;
+
+        if (question.response_kind === "text") {
+            return answer.response_text.trim().length > 0;
+        }
+
+        return answer.response_option_id !== null;
+    }
 
     function ratingLabel(value: number): string {
         if (value <= 2) return "Poor";
@@ -64,13 +92,43 @@
         return "text-green-600";
     }
 
+    function selectedAgreementValue(question: Question): number {
+        const optionId = answers[question.id]?.response_option_id;
+        if (!optionId) return 5;
+
+        const selected = question.options.find(
+            (option) => option.id === optionId,
+        );
+        if (!selected || selected.numeric_score === null) return 5;
+        return selected.numeric_score;
+    }
+
+    function setAgreementValue(question: Question, value: number) {
+        const selectedOption = question.options.find(
+            (option) => option.numeric_score === value,
+        );
+        if (!selectedOption) return;
+
+        answers[question.id].response_option_id = selectedOption.id;
+        answers = { ...answers };
+    }
+
     function handleSubmit() {
         submitted = true;
         toast.success("Thank you! Your evaluation has been submitted.");
     }
 
     function next() {
-        if (currentStep < totalSteps - 1) currentStep++;
+        if (currentStep >= totalSteps - 1) return;
+
+        if (!canProceed) {
+            toast.error(
+                "Please answer this required question before continuing.",
+            );
+            return;
+        }
+
+        currentStep++;
     }
 
     function prev() {
@@ -104,7 +162,10 @@
             <!-- Header -->
             <div class="space-y-2">
                 <h1 class="text-3xl font-bold tracking-tight">
-                    [course_name] ([section])
+                    {data.section.course_name}
+                    <span class="text-lg font-normal text-muted-foreground"
+                        >({data.section.code})</span
+                    >
                 </h1>
                 <h2 class="text-xl font-bold tracking-tight">
                     Course Evaluation
@@ -145,73 +206,115 @@
                                     </span>
                                     <div>
                                         <Card.Title class="text-lg"
-                                            >{question.label}</Card.Title
+                                            >{question.prompt}</Card.Title
                                         >
                                         <Card.Description class="mt-0.5">
-                                            {question.description}
+                                            Question {i + 1}
                                         </Card.Description>
                                     </div>
                                 </div>
                             </Card.Header>
                             <Card.Content class="space-y-6 pb-8 px-8">
-                                <!-- Current value display -->
-                                <div
-                                    class="flex items-center justify-center gap-3"
-                                >
-                                    <span
-                                        class="text-4xl font-bold tabular-nums transition-colors duration-200 {ratingColor(
-                                            answers[question.id][0],
-                                        )}"
-                                    >
-                                        {answers[question.id][0]}
-                                    </span>
-                                    <span class="text-lg text-muted-foreground"
-                                        >/10</span
-                                    >
-                                    <span
-                                        class="text-sm font-medium text-muted-foreground ml-1"
-                                        >— {ratingLabel(
-                                            answers[question.id][0],
-                                        )}</span
-                                    >
-                                </div>
-
-                                <!-- Slider -->
-                                <div class="px-2">
-                                    <Slider
-                                        type="multiple"
-                                        bind:value={answers[question.id]}
-                                        min={1}
-                                        max={10}
-                                        step={1}
-                                        class="w-full"
+                                {#if question.response_kind === "text"}
+                                    <Textarea
+                                        bind:value={
+                                            answers[question.id].response_text
+                                        }
+                                        placeholder="Share your feedback"
+                                        rows={5}
+                                        class="resize-none"
                                     />
-                                </div>
-
-                                <!-- Range labels -->
-                                <div
-                                    class="flex justify-between text-xs text-muted-foreground px-1"
-                                >
-                                    <span>{question.lowLabel}</span>
-                                    <span>{question.highLabel}</span>
-                                </div>
-
-                                <!-- Quick-pick number buttons -->
-                                <div class="flex justify-between gap-1">
-                                    {#each Array.from({ length: 10 }, (_, k) => k + 1) as num}
-                                        <button
-                                            type="button"
-                                            class="flex-1 h-9 rounded-md text-sm font-medium transition-all duration-150
-												{answers[question.id][0] === num
-                                                ? 'bg-primary text-primary-foreground shadow-sm scale-110'
-                                                : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
-                                            onclick={() =>
-                                                (answers[question.id] = [num])}
+                                {:else if question.response_kind === "agreement_scale"}
+                                    <div
+                                        class="flex items-center justify-center gap-3"
+                                    >
+                                        <span
+                                            class="text-4xl font-bold tabular-nums transition-colors duration-200 {ratingColor(
+                                                selectedAgreementValue(
+                                                    question,
+                                                ),
+                                            )}"
                                         >
-                                            {num}
-                                        </button>
-                                    {/each}
-                                </div>
+                                            {selectedAgreementValue(question)}
+                                        </span>
+                                        <span
+                                            class="text-lg text-muted-foreground"
+                                            >/10</span
+                                        >
+                                        <span
+                                            class="text-sm font-medium text-muted-foreground ml-1"
+                                            >- {ratingLabel(
+                                                selectedAgreementValue(
+                                                    question,
+                                                ),
+                                            )}</span
+                                        >
+                                    </div>
+
+                                    <div class="px-2">
+                                        <Slider
+                                            type="multiple"
+                                            value={[
+                                                selectedAgreementValue(
+                                                    question,
+                                                ),
+                                            ]}
+                                            min={1}
+                                            max={10}
+                                            step={1}
+                                            onValueChange={(value) =>
+                                                setAgreementValue(
+                                                    question,
+                                                    value[0] ?? 5,
+                                                )}
+                                            class="w-full"
+                                        />
+                                    </div>
+
+                                    <div class="flex justify-between gap-1">
+                                        {#each Array.from({ length: 10 }, (_, k) => k + 1) as num}
+                                            <button
+                                                type="button"
+                                                class="flex-1 h-9 rounded-md text-sm font-medium transition-all duration-150
+                                                {selectedAgreementValue(
+                                                    question,
+                                                ) === num
+                                                    ? 'bg-primary text-primary-foreground shadow-sm scale-110'
+                                                    : 'bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground'}"
+                                                onclick={() =>
+                                                    setAgreementValue(
+                                                        question,
+                                                        num,
+                                                    )}
+                                            >
+                                                {num}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {:else}
+                                    <div class="grid gap-2">
+                                        {#each question.options as option}
+                                            <button
+                                                type="button"
+                                                class="w-full rounded-md border px-4 py-2 text-left text-sm font-medium transition-colors
+                                                {answers[question.id]
+                                                    .response_option_id ===
+                                                option.id
+                                                    ? 'border-primary bg-primary/10 text-primary'
+                                                    : 'border-border bg-background hover:bg-accent hover:text-accent-foreground'}"
+                                                onclick={() => {
+                                                    answers[
+                                                        question.id
+                                                    ].response_option_id =
+                                                        option.id;
+                                                    answers = { ...answers };
+                                                }}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        {/each}
+                                    </div>
+                                {/if}
                             </Card.Content>
                         </Card.Root>
                     </div>
@@ -234,43 +337,32 @@
                             </Card.Description>
                         </Card.Header>
                         <Card.Content class="space-y-4">
-                            {#each questions as question, i}
+                            {#each questions as question}
                                 <div
                                     class="flex items-center justify-between py-2 border-b last:border-0"
                                 >
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm font-medium"
-                                            >{question.label}</span
+                                            >{question.prompt}</span
                                         >
                                     </div>
-                                    <span
-                                        class="text-lg font-bold tabular-nums {ratingColor(
-                                            answers[question.id][0],
-                                        )}"
-                                    >
-                                        {answers[question.id][0]}/10
-                                    </span>
+                                    {#if question.response_kind === "text"}
+                                        <span
+                                            class="text-sm text-muted-foreground text-right max-w-xs truncate"
+                                        >
+                                            {answers[question.id]
+                                                .response_text ||
+                                                "No response yet"}
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="text-sm font-medium text-right"
+                                        >
+                                            {selectedOptionLabel(question)}
+                                        </span>
+                                    {/if}
                                 </div>
                             {/each}
-                        </Card.Content>
-                    </Card.Root>
-
-                    <Card.Root class="shadow-md">
-                        <Card.Header>
-                            <Card.Title class="text-lg"
-                                >Additional Comments</Card.Title
-                            >
-                            <Card.Description>
-                                Anything else you'd like to share? (optional)
-                            </Card.Description>
-                        </Card.Header>
-                        <Card.Content>
-                            <Textarea
-                                bind:value={comment}
-                                placeholder="Share your thoughts, suggestions, or experiences…"
-                                rows={4}
-                                class="resize-none"
-                            />
                         </Card.Content>
                     </Card.Root>
                 </div>
@@ -287,7 +379,8 @@
                 </Button>
 
                 {#if currentStep < totalSteps - 1}
-                    <Button onclick={next}>Next →</Button>
+                    <Button onclick={next} disabled={!canProceed}>Next →</Button
+                    >
                 {:else}
                     <Button onclick={handleSubmit}>Submit Evaluation</Button>
                 {/if}

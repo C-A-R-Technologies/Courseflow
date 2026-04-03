@@ -1,50 +1,94 @@
 <script lang="ts">
-    import type { User } from "$lib/models";
+    import type { User, Term, StudentCourseOverview } from "$lib/models";
     import * as Card from "$lib/components/ui/card/index.js";
     import { Separator } from "$lib/components/ui/separator/index.js";
     import { Progress } from "$lib/components/ui/progress/index.js";
     import * as Collapsible from "$lib/components/ui/collapsible/index.js";
     import { toast } from "svelte-sonner";
     import ChevronRight from "@lucide/svelte/icons/chevron-right";
+    import { termIsSpring } from "$lib/utils";
+    import { getActiveEnrollments } from "$lib/functions/enrollments.remote";
 
-    const { user }: { user: User } = $props();
+    interface Props {
+        user: User;
+        term: Term | null;
+        courseOverviews: StudentCourseOverview[];
+    }
 
-    const activeEvaluations: {
-        id: string;
-        course: string;
-        section: string;
-        dueDate: string;
-        instructor: string;
-    }[] = [
-        {
-            id: "24a6b4d5-82a2-48af-bbab-1cee6b933f80",
-            course: "Test course",
-            section: "00000",
-            dueDate: "April 13, 2026",
-            instructor: "Swapnil Chhabra",
-        },
-    ];
+    const { user, term, courseOverviews }: Props = $props();
+    let currentEvaluations = $state<StudentCourseOverview[]>([]);
+    let upcomingEvaluations = $state<StudentCourseOverview[]>([]);
+    let pastEvaluations = $state<StudentCourseOverview[]>([]);
+    let completedAmount = $state(0);
+    let completedRate = $state(0.0);
+    let termDaysLeft = $state(0);
+    let activeEnrollments = $state(0);
 
-    const upcomingEvaluations = [
-        {
-            id: "6e72a314-a44d-4299-942f-5e24f1aae3f1",
-            course: "CS-414: Software Engineer Project II",
-            section: "11124",
-            opensDate: "April 13, 2026",
-            instructor: "Swapnil Chhabra",
-        },
-    ];
+    $effect(() => {
+        const allEvaluations: StudentCourseOverview[] = courseOverviews.map(
+            (overview) => {
+                return {
+                    section_id: overview.section_id,
+                    section_code: overview.section_code,
+                    course_id: overview.course_id,
+                    course_name: overview.course_name,
+                    instructor_name: overview.instructor_name,
+                    evaluation_form_id: overview.evaluation_form_id,
+                    evaluation_form_opens_at: overview.evaluation_form_opens_at,
+                    evaluation_form_closes_at:
+                        overview.evaluation_form_closes_at,
+                    evaluation_completed: overview.evaluation_completed,
+                    evaluation_completed_at: overview.evaluation_completed_at,
+                };
+            },
+        );
 
-    const pastEvaluations = [
-        {
-            id: "b3f22cdf-f7a8-4c91-98f0-fafc504d6bca",
-            course: "CS-465: Software Testing & QA",
-            section: "11121",
-            completedDate: "Dec 15, 2025",
-            instructor: "Charles Palmer",
-            submitted: true,
-        },
-    ];
+        currentEvaluations = allEvaluations.filter((evaluation) => {
+            const openDate = new Date(evaluation.evaluation_form_opens_at);
+            const dueDate = new Date(evaluation.evaluation_form_closes_at);
+            const now = new Date();
+            return dueDate >= now && openDate <= now;
+        });
+
+        upcomingEvaluations = allEvaluations.filter((evaluation) => {
+            const openDate = new Date(evaluation.evaluation_form_opens_at);
+            const dueDate = new Date(evaluation.evaluation_form_closes_at);
+            const now = new Date();
+            return openDate > now;
+        });
+
+        pastEvaluations = allEvaluations.filter((evaluation) => {
+            const dueDate = new Date(evaluation.evaluation_form_closes_at);
+            const now = new Date();
+            return dueDate < now;
+        });
+
+        if (courseOverviews.length > 0) {
+            completedAmount = courseOverviews.filter(
+                (c) => c.evaluation_completed,
+            ).length;
+            completedRate = Math.round(
+                (completedAmount / courseOverviews.length) * 100,
+            );
+        } else {
+            completedAmount = 0;
+            completedRate = 0;
+        }
+
+        if (term) {
+            const now = new Date();
+            const termEnd = new Date(term.ends_at);
+            const timeDiff = termEnd.getTime() - now.getTime();
+            termDaysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+            getActiveEnrollments({ userId: user.id, termId: term.id }).then(
+                (count) => {
+                    activeEnrollments = count;
+                    console.log(`Active enrollments: ${count}`);
+                },
+            );
+        }
+    });
 </script>
 
 <div class="mb-8">
@@ -62,31 +106,41 @@
     </p>
 </div>
 
-{#if activeEvaluations.length > 0}
+{#if currentEvaluations.length > 0}
     <section class="w-full mb-10">
         <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">
             <span class="inline-block h-2 w-2 rounded-full bg-green-500"></span>
             Available Evaluations
         </h2>
         <div class="grid gap-4 sm:grid-cols-2">
-            {#each activeEvaluations as evaluation}
+            {#each currentEvaluations as evaluation}
                 <Card.Root
-                    class="border-green-500/30 transition-colors hover:border-green-500/60"
+                    class="border-green-500/20 transition-colors hover:border-green-500"
                     onclick={() =>
-                        (window.location.href = `/in/courses/${evaluation.id}/eval`)}
+                        (window.location.href = `/in/courses/${evaluation.section_id}/eval`)}
                 >
-                    <Card.Header>
-                        <Card.Title>{evaluation.course}</Card.Title>
+                    <Card.Header class="select-none">
+                        <Card.Title>{evaluation.course_name}</Card.Title>
                         <Card.Description>
-                            Section {evaluation.section} &middot;
-                            {evaluation.instructor}
+                            Section {evaluation.section_code} &middot;
+                            {evaluation.instructor_name}
                         </Card.Description>
                     </Card.Header>
                     <Card.Footer>
                         <span
-                            class="text-sm font-medium text-green-600 dark:text-green-400"
+                            class="text-sm select-none font-medium text-green-600 dark:text-green-400"
                         >
-                            Due {evaluation.dueDate}
+                            Due {new Date(
+                                evaluation.evaluation_form_closes_at,
+                            ).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                            })} @ {new Date(
+                                evaluation.evaluation_form_closes_at,
+                            ).toLocaleTimeString(undefined, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                            })}
                         </span>
                     </Card.Footer>
                 </Card.Root>
@@ -120,18 +174,31 @@
                         <Card.Root
                             class="transition-colors hover:border-primary/40"
                             onclick={() =>
-                                toast.warning(`Evaluation for ${evaluation.course}\nisn't open yet`)}
+                                toast.warning(
+                                    `Evaluation for ${evaluation.course_name}\nisn't open yet`,
+                                )}
                         >
                             <Card.Header>
-                                <Card.Title>{evaluation.course}</Card.Title>
+                                <Card.Title>{evaluation.course_name}</Card.Title
+                                >
                                 <Card.Description>
-                                    Section {evaluation.section} &middot;
-                                    {evaluation.instructor}
+                                    Section {evaluation.section_code} &middot;
+                                    {evaluation.instructor_name}
                                 </Card.Description>
                             </Card.Header>
                             <Card.Footer>
                                 <span class="text-sm text-muted-foreground">
-                                    Opens {evaluation.opensDate}
+                                    Opens {new Date(
+                                        evaluation.evaluation_form_opens_at,
+                                    ).toLocaleDateString(undefined, {
+                                        month: "short",
+                                        day: "numeric",
+                                    })} @ {new Date(
+                                        evaluation.evaluation_form_opens_at,
+                                    ).toLocaleTimeString(undefined, {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })}
                                 </span>
                             </Card.Footer>
                         </Card.Root>
@@ -167,12 +234,14 @@
                         <Card.Root
                             class="opacity-80"
                             onclick={() =>
-                                toast.warning(`You've already submitted an evaluation for ${evaluation.course}`)}
+                                toast.warning(
+                                    `You've already submitted an evaluation for ${evaluation.course_name}`,
+                                )}
                         >
                             <Card.Header>
                                 <Card.Title class="flex items-center gap-2">
-                                    {evaluation.course}
-                                    {#if evaluation.submitted}
+                                    {evaluation.course_name}
+                                    {#if evaluation.evaluation_completed}
                                         <span
                                             class="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary"
                                         >
@@ -187,14 +256,30 @@
                                     {/if}
                                 </Card.Title>
                                 <Card.Description>
-                                    Section {evaluation.section} &middot;
-                                    {evaluation.instructor}
+                                    Section {evaluation.section_code} &middot;
+                                    {evaluation.instructor_name}
                                 </Card.Description>
                             </Card.Header>
                             <Card.Footer>
-                                <span class="text-sm text-muted-foreground">
-                                    Completed {evaluation.completedDate}
-                                </span>
+                                {#if evaluation.evaluation_completed_at}
+                                    <span class="text-sm text-muted-foreground">
+                                        Completed {new Date(
+                                            evaluation.evaluation_completed_at,
+                                        ).toLocaleDateString(undefined, {
+                                            month: "short",
+                                            day: "numeric",
+                                        })} @ {new Date(
+                                            evaluation.evaluation_completed_at,
+                                        ).toLocaleTimeString(undefined, {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        })}
+                                    </span>
+                                {:else}
+                                    <span class="text-sm text-muted-foreground">
+                                        Not yet submitted
+                                    </span>
+                                {/if}
                             </Card.Footer>
                         </Card.Root>
                     {/each}
@@ -208,34 +293,65 @@
 
 <section class="w-full mb-10">
     <h2 class="text-xl font-semibold mb-3">Your Stats</h2>
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-4">
+        <Card.Root>
+            <Card.Header>
+                <Card.Description>Enrolled courses</Card.Description>
+                <Card.Title class="text-3xl">{activeEnrollments}</Card.Title>
+            </Card.Header>
+        </Card.Root>
         <Card.Root>
             <Card.Header>
                 <Card.Description>Evaluations Completed</Card.Description>
-                <Card.Title class="text-3xl"
-                    >1 <span class="text-lg">(0 missed)</span></Card.Title
-                >
+                {#if courseOverviews.length === 0}
+                    <Card.Title class="text-3xl">0</Card.Title>
+                {:else}
+                    <Card.Title class="text-3xl">
+                        {courseOverviews.filter((c) => c.evaluation_completed)
+                            .length}
+                        <span class="text-lg">
+                            ({pastEvaluations.length -
+                                pastEvaluations.filter(
+                                    (c) => c.evaluation_completed,
+                                ).length} missed)</span
+                        >
+                    </Card.Title>
+                {/if}
             </Card.Header>
         </Card.Root>
         <Card.Root>
             <Card.Header>
                 <Card.Description>Completion Rate</Card.Description>
-                <Card.Title class="text-3xl">100%</Card.Title>
+                <Card.Title class="text-3xl"
+                    >{completedRate > 0 ? completedRate : "N/A"}%</Card.Title
+                >
             </Card.Header>
-            <Card.Content>
-                <Progress value={100} class="h-2" />
+            <Card.Content class="-mt-4">
+                <Progress value={completedRate} class="h-2" />
             </Card.Content>
         </Card.Root>
         <Card.Root>
             <Card.Header>
                 <Card.Description>Current Term</Card.Description>
-                <Card.Title class="text-3xl">Spring 2026 (A1)</Card.Title>
+                {#if term}
+                    <Card.Title class="text-3xl">
+                        {termIsSpring(term) ? "Spring" : "Fall"} 2026 (A1)
+                        <br />
+                        <span class="text-xl text-muted-foreground">
+                            {termDaysLeft} days left</span
+                        >
+                    </Card.Title>
+                {:else}
+                    <Card.Title class="text-3xl"
+                        >No active or upcoming term</Card.Title
+                    >
+                {/if}
             </Card.Header>
         </Card.Root>
     </div>
 </section>
 
-<section class="w-full mb-10 sr-only">
+<section class="w-full mb-10">
     <Card.Root class="bg-muted/50">
         <Card.Header>
             <Card.Title class="text-base">Why evaluations matter</Card.Title>
@@ -244,9 +360,8 @@
             <p class="text-sm text-muted-foreground leading-relaxed">
                 Course evaluations directly influence how courses are taught in
                 future terms. Your honest, constructive feedback helps
-                instructors improve their teaching and helps the university
-                shape a better learning experience for everyone. All responses
-                are anonymous.
+                instructors improve their teaching and helps SNHU shape a better
+                learning experience for everyone. All responses are anonymous.
             </p>
         </Card.Content>
     </Card.Root>

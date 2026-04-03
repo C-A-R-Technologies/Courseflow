@@ -1,12 +1,15 @@
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { privateEnv } from "$lib/env/private";
-import { publicEnv } from "$lib/env/public";
 import { User } from "$lib/models";
 import { hashPassword, verifyToken } from "$lib/server/auth";
-import { db, sql } from "$lib/server/postgres";
+import {
+	BASE_EVALUATION_QUESTION_SEEDS,
+	EVALUATION_CATEGORY_SORT_INDEX,
+} from "$lib/server/seeds/evaluation";
+import { SCHOOL_SEEDS } from "$lib/server/seeds/schools";
+import { sql } from "$lib/server/postgres";
 import { type Handle, type ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
-import fs from "fs";
 
 const handleParaglide: Handle = ({ event, resolve }) => paraglideMiddleware(event.request, ({ request, locale }) => {
 	event.request = request;
@@ -61,86 +64,128 @@ export const init: ServerInit = async () => {
 	if (privateEnv.smtp) console.log("SMTP is configured for outgoing emails.");
 	else console.warn("SMTP is not fully configured. Outgoing emails will not be sent.");
 
-	if (publicEnv.init_evaluation_json) {
-		const filePath = publicEnv.init_evaluation_json;
-		try {
-			await sql`ALTER TABLE questions ALTER COLUMN school_id DROP NOT NULL`;
+	try {
+		await sql`ALTER TABLE evaluation_questions ALTER COLUMN school_id DROP NOT NULL`;
+		await sql`ALTER TABLE evaluation_categories ALTER COLUMN school_id DROP NOT NULL`;
 
-			if (fs.existsSync(filePath)) {
-				const evaluationData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-				const seedQuestions: Array<{
-					category: string;
-					index: number;
-					type: string;
-					required: boolean;
-					question: string;
-					notes: string | null;
-				}> = [];
+		const existingEvaluationQuestions = await sql`SELECT 1 FROM evaluation_questions LIMIT 1`;
 
-				const questionSets = Array.isArray(evaluationData?.questions) ? evaluationData.questions : [];
+		if (existingEvaluationQuestions.length > 0) {
+			console.log("Questions already exist; skipping question initialization.");
+		} else {
+			const categoryIds = new Map<string, string>();
 
-				for (const questionSet of questionSets) {
-					if (!questionSet || typeof questionSet !== "object") continue;
+			for (const [name, sortIndex] of Object.entries(EVALUATION_CATEGORY_SORT_INDEX)) {
+				const existingCategory = await sql`
+					SELECT id
+					FROM evaluation_categories
+					WHERE school_id IS NULL
+					AND name = ${name}
+					LIMIT 1
+				`;
 
-					for (const levelSections of Object.values(questionSet)) {
-						if (!Array.isArray(levelSections)) continue;
-
-						for (const section of levelSections) {
-							if (!section || typeof section !== "object") continue;
-
-							for (const [category, categoryQuestions] of Object.entries(section)) {
-								if (!["course", "instructor", "library"].includes(category)) continue;
-								if (!Array.isArray(categoryQuestions)) continue;
-
-								for (const question of categoryQuestions) {
-									if (!question || typeof question !== "object") continue;
-
-									const q = question as any;
-									if (typeof q.index !== "number") continue;
-									if (!["agreement_scale", "yes_no", "text"].includes(String(q.type))) continue;
-									if (typeof q.required !== "boolean") continue;
-									if (typeof q.question !== "string") continue;
-
-									seedQuestions.push({
-										category,
-										index: q.index,
-										type: String(q.type),
-										required: q.required,
-										question: q.question,
-										notes: typeof q.notes === "string" && q.notes.trim() ? q.notes : null,
-									});
-								}
-							}
-						}
-					}
+				if (existingCategory.length > 0) {
+					categoryIds.set(name, String(existingCategory[0].id));
+					continue;
 				}
 
-				if (seedQuestions.length === 0) {
-					console.warn(`No valid questions found in ${filePath}; skipping question initialization.`);
-				} else {
-					const existing = await sql`SELECT 1 FROM questions LIMIT 1`;
+				const insertedCategory = await sql`
+					INSERT INTO evaluation_categories (school_id, sort_index, name, created_at, updated_at)
+					VALUES (NULL, ${sortIndex}, ${name}, now(), now())
+					RETURNING id
+				`;
 
-					if (existing.length > 0) {
-						console.log("Questions already exist; skipping question initialization.");
-					} else {
-						for (const q of seedQuestions) {
-							await sql`
-								INSERT INTO questions (index, category, type, required, question, notes)
-								VALUES (${q.index}, ${q.category}, ${q.type}, ${q.required}, ${q.question}, ${q.notes})
-							`;
-						}
+				if (insertedCategory.length > 0) categoryIds.set(name, String(insertedCategory[0].id));
+			}
 
-						console.log(`Inserted ${seedQuestions.length} base questions.`);
-					}
+			for (const question of BASE_EVALUATION_QUESTION_SEEDS) {
+				const categoryId = categoryIds.get(question.category);
+				if (!categoryId) continue;
+
+				await sql`
+					INSERT INTO evaluation_questions (school_id, category_id, response_kind, prompt, required, active, created_at, updated_at)
+					VALUES (NULL, ${categoryId}, ${question.responseKind}, ${question.prompt}, ${question.required}, true, now(), now())
+				`;
+			}
+
+			console.log(`Inserted ${BASE_EVALUATION_QUESTION_SEEDS.length} base questions.`);
+		}
+
+		const questionsNeedingOptions = await sql`
+			SELECT q.id, q.response_kind
+			FROM evaluation_questions q
+			WHERE NOT EXISTS (
+				SELECT 1
+				FROM evaluation_question_options o
+				WHERE o.question_id = q.id
+			)
+		`;
+
+		let optionRowsInserted = 0;
+
+		for (const question of questionsNeedingOptions) {
+			const questionId = String(question.id);
+			const responseKind = String(question.response_kind);
+
+			if (responseKind === "agreement_scale") {
+				for (let i = 1; i <= 10; i++) {
+					await sql`
+						INSERT INTO evaluation_question_options (question_id, label, numeric_score, sort_index, created_at, updated_at)
+						VALUES (${questionId}, ${String(i)}, ${i}, ${i - 1}, now(), now())
+					`;
+					optionRowsInserted++;
 				}
+				continue;
 			}
-			else {
-				console.warn(`Evaluation JSON file not found at ${filePath}; skipping question initialization.`);
+
+			if (responseKind === "yes_no") {
+				await sql`
+					INSERT INTO evaluation_question_options (question_id, label, numeric_score, sort_index, created_at, updated_at)
+					VALUES (${questionId}, ${"Yes"}, ${1}, ${0}, now(), now())
+				`;
+				await sql`
+					INSERT INTO evaluation_question_options (question_id, label, numeric_score, sort_index, created_at, updated_at)
+					VALUES (${questionId}, ${"No"}, ${0}, ${1}, now(), now())
+				`;
+				optionRowsInserted += 2;
 			}
 		}
-		catch (err) {
-			console.error(`Failed to load evaluation JSON from ${filePath}:`, err);
+
+		if (optionRowsInserted > 0) console.log(`Inserted ${optionRowsInserted} evaluation question options.`);
+	}
+	catch (err) {
+		console.error("Failed to seed base evaluation questions:", err);
+	}
+
+	try {
+		const existingSchools = await sql`
+			SELECT name, abbreviation
+			FROM schools
+		`;
+
+		const existingKeys = new Set(
+			existingSchools.map(s => `${String(s.name).toLowerCase()}|${String(s.abbreviation).toLowerCase()}`)
+		);
+		let inserted = 0;
+
+		for (const school of SCHOOL_SEEDS) {
+			const key = `${school.name.toLowerCase()}|${school.abbreviation.toLowerCase()}`;
+			if (existingKeys.has(key)) continue;
+
+			await sql`
+				INSERT INTO schools (name, abbreviation, created_at, updated_at)
+				VALUES (${school.name}, ${school.abbreviation}, now(), now())
+			`;
+
+			existingKeys.add(key);
+			inserted++;
 		}
+
+		if (inserted === 0) console.log("Schools already exist; skipping school initialization.");
+		else console.log(`Inserted ${inserted} schools.`);
+	}
+	catch (err) {
+		console.error("Failed to seed schools:", err);
 	}
 };
 
