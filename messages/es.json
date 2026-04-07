@@ -1,4 +1,37 @@
 {
-	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from es!"
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+
+  "dashboard_greeting_morning": "Buenos días, {name}",
+  "dashboard_greeting_afternoon": "Buenas tardes, {name}",
+  "dashboard_greeting_evening": "Buenas noches, {name}",
+
+  "dashboard_overview": "Aquí tienes un resumen de tus evaluaciones de cursos.",
+
+  "evaluations_available": "Evaluaciones disponibles",
+  "evaluations_upcoming": "Próximas evaluaciones",
+  "evaluations_upcoming_empty": "No hay evaluaciones próximas en este momento.",
+  "evaluations_past": "Evaluaciones pasadas",
+  "evaluations_past_empty": "Aún no hay evaluaciones pasadas.",
+
+  "evaluation_due": "Fecha límite",
+  "evaluation_opens": "Disponible desde",
+
+  "evaluation_not_open_warning": "La evaluación de {course} aún no está disponible",
+  "evaluation_already_submitted_warning": "Ya has enviado una evaluación para {course}",
+
+  "evaluation_submitted": "Enviado",
+  "evaluation_missed": "Perdido",
+  "evaluation_completed": "Completado",
+  "evaluation_not_submitted": "Aún no enviado",
+
+  "stats_title": "Tus estadísticas",
+  "stats_enrolled_courses": "Cursos inscritos",
+  "stats_evaluations_completed": "Evaluaciones completadas",
+  "stats_completion_rate": "Tasa de finalización",
+  "stats_current_term": "Periodo actual",
+  "stats_no_term": "No hay periodo activo o próximo",
+  "stats_days_left": "Quedan {days} días",
+
+  "why_evaluations_title": "Por qué son importantes las evaluaciones",
+  "why_evaluations_description": "Las evaluaciones de cursos influyen directamente en cómo se imparten en futuros periodos. Tus comentarios honestos y constructivos ayudan a los profesores a mejorar su enseñanza y ayudan a SNHU a ofrecer una mejor experiencia de aprendizaje para todos. Todas las respuestas son anónimas."
 }

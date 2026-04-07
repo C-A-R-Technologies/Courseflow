@@ -1,8 +1,37 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
-	"hello_world": "Hello, {name} from en!",
-	"index_greeting": "Welcome to Courseflow",
-	"index_subgreeting": "Course evaluation, reimagined.",
+	
+	"dashboard_greeting_morning": "Good morning, {name}",
+	"dashboard_greeting_afternoon": "Good afternoon, {name}",
+	"dashboard_greeting_evening": "Good evening, {name}",
 
-	"login_signinmessage": "Sign in to your Courseflow account."
+	"dashboard_overview": "Here's an overview of your course evaluations.",
+
+	"evaluations_available": "Available Evaluations",
+	"evaluations_upcoming": "Upcoming Evaluations",
+	"evaluations_upcoming_empty": "No upcoming evaluations right now.",
+	"evaluations_past": "Past Evaluations",
+	"evaluations_past_empty": "No past evaluations yet.",
+
+	"evaluation_due": "Due",
+	"evaluation_opens": "Opens",
+
+	"evaluation_not_open_warning": "Evaluation for {course} isn't open yet",
+	"evaluation_already_submitted_warning": "You've already submitted an evaluation for {course}",
+
+	"evaluation_submitted": "Submitted",
+	"evaluation_missed": "Missed",
+	"evaluation_completed": "Completed",
+	"evaluation_not_submitted": "Not yet submitted",
+
+	"stats_title": "Your Stats",
+	"stats_enrolled_courses": "Enrolled courses",
+	"stats_evaluations_completed": "Evaluations Completed",
+	"stats_completion_rate": "Completion Rate",
+	"stats_current_term": "Current Term",
+	"stats_no_term": "No active or upcoming term",
+	"stats_days_left": "{days} days left",
+
+	"why_evaluations_title": "Why evaluations matter",
+	"why_evaluations_description": "Course evaluations directly influence how courses are taught in future terms. Your honest, constructive feedback helps instructors improve their teaching and helps SNHU shape a better learning experience for everyone. All responses are anonymous."
 }
