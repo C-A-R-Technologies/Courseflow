@@ -68,6 +68,12 @@ function getSetCookieHeader(res: K6TextRes) {
     return raw || "";
 }
 
+function resolveActionUrl(baseUrl: string, action: string): string {
+    if (action.startsWith("http://") || action.startsWith("https://")) return action;
+    if (action.startsWith("/")) return `${baseUrl}${action}`;
+    return `${baseUrl}/${action}`;
+}
+
 function getLoginUser(): LoginUser {
     if (seededUsers) {
         const vuOffset = Math.max(0, exec.vu.idInTest - 1);
@@ -116,7 +122,7 @@ export function setup() {
     }
 
     const remoteId = remoteMatch[1];
-    const actionUrl = new URL(action, resolvedBaseUrl).toString();
+    const actionUrl = resolveActionUrl(resolvedBaseUrl, action);
     const cookieHeader = getSetCookieHeader(pageRes);
 
     return {
