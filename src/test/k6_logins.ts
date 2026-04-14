@@ -156,6 +156,12 @@ export function setup() {
 
 export default function (data: SetupData) {
     const user = getLoginUser();
+    const headers: Record<string, string> = {
+        Origin: data.baseUrl,
+        Referer: `${data.baseUrl}/login`
+    };
+
+    if (data.cookieHeader) headers.Cookie = data.cookieHeader;
 
     const res = http.post(data.actionUrl, {
         email: user.email,
@@ -163,7 +169,7 @@ export default function (data: SetupData) {
     }, {
         redirects: 0,
         responseType: "text",
-        headers: data.cookieHeader ? { Cookie: data.cookieHeader } : undefined,
+        headers,
         tags: { endpoint: "login" }
     }) as K6TextRes;
 
