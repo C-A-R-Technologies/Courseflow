@@ -12,12 +12,20 @@ type SetupData = {
     baseUrl: string;
     remoteId: string;
     actionUrl: string;
+    cookieHeader: string;
 };
 
 const BASE_URL = (__ENV.BASE_URL || "http://localhost:5173").replace(/\/$/, "");
 const USERS_FILE = __ENV.USERS_FILE || "seed_users.generated.json";
 const FALLBACK_EMAIL = __ENV.LOGIN_EMAIL;
 const FALLBACK_PASSWORD = __ENV.LOGIN_PASSWORD || "WeakestPassOf2026??";
+const START_VUS = Number(__ENV.START_VUS || 10);
+const PEAK_VUS = Number(__ENV.PEAK_VUS || 500);
+const RAMP_UP = __ENV.RAMP_UP || "2m";
+const HOLD_FOR = __ENV.HOLD_FOR || "5m";
+const RAMP_DOWN = __ENV.RAMP_DOWN || "1m";
+const REQUIRE_UNIQUE_USERS = __ENV.REQUIRE_UNIQUE_USERS === "true";
+const DEBUG_FAILURES = __ENV.DEBUG_FAILURES === "true";
 
 const seededUsers = USERS_FILE
     ? new SharedArray("seeded users", () => JSON.parse(open(USERS_FILE)) as LoginUser[])
@@ -27,39 +35,32 @@ if (seededUsers && seededUsers.length === 0) {
     throw new Error(`No users found in ${USERS_FILE}`);
 }
 
-export const options = seededUsers
-    ? {
-        scenarios: {
-            login_only: {
-                executor: "shared-iterations",
-                vus: Math.min(50, seededUsers.length),
-                iterations: seededUsers.length,
-                maxDuration: "30m"
-            }
-        },
-        thresholds: {
-            http_req_failed: ["rate<0.02"],
-            http_req_duration: ["p(95)<1500"]
-        }
+if (seededUsers && REQUIRE_UNIQUE_USERS && PEAK_VUS > seededUsers.length) {
+    throw new Error(
+        `PEAK_VUS (${PEAK_VUS}) is greater than seeded users (${seededUsers.length}). Add more users or lower PEAK_VUS.`
+    );
+}
+
+if (!Number.isFinite(START_VUS) || START_VUS < 1) {
+    throw new Error(`START_VUS must be a positive number. Received: ${START_VUS}`);
+}
+
+if (!Number.isFinite(PEAK_VUS) || PEAK_VUS < START_VUS) {
+    throw new Error(`PEAK_VUS must be >= START_VUS. Received: START_VUS=${START_VUS}, PEAK_VUS=${PEAK_VUS}`);
+}
+
+export const options = {
+    vus: START_VUS,
+    stages: [
+        { duration: RAMP_UP, target: PEAK_VUS },
+        { duration: HOLD_FOR, target: PEAK_VUS },
+        { duration: RAMP_DOWN, target: 0 }
+    ],
+    thresholds: {
+        http_req_failed: ["rate<0.02"],
+        http_req_duration: ["p(95)<1500"]
     }
-    : {
-        scenarios: {
-            login_only: {
-                executor: "ramping-vus",
-                startVUs: 1,
-                stages: [
-                    { duration: "30s", target: 10 },
-                    { duration: "2m", target: 50 },
-                    { duration: "30s", target: 0 }
-                ],
-                gracefulRampDown: "10s"
-            }
-        },
-        thresholds: {
-            http_req_failed: ["rate<0.02"],
-            http_req_duration: ["p(95)<1500"]
-        }
-    };
+};
 
 function getSetCookieHeader(res: K6TextRes) {
     const raw = res.headers["Set-Cookie"];
@@ -69,7 +70,8 @@ function getSetCookieHeader(res: K6TextRes) {
 
 function getLoginUser(): LoginUser {
     if (seededUsers) {
-        const index = exec.scenario.iterationInTest % seededUsers.length;
+        const vuOffset = Math.max(0, exec.vu.idInTest - 1);
+        const index = (vuOffset + exec.vu.iterationInScenario) % seededUsers.length;
         return seededUsers[index];
     }
 
@@ -114,12 +116,14 @@ export function setup() {
     }
 
     const remoteId = remoteMatch[1];
-    const actionUrl = `${resolvedBaseUrl}/_app/remote/${remoteId}`;
+    const actionUrl = new URL(action, resolvedBaseUrl).toString();
+    const cookieHeader = getSetCookieHeader(pageRes);
 
     return {
         baseUrl: resolvedBaseUrl,
         remoteId,
-        actionUrl
+        actionUrl,
+        cookieHeader
     } satisfies SetupData;
 }
 
@@ -132,10 +136,12 @@ export default function (data: SetupData) {
     }, {
         redirects: 0,
         responseType: "text",
+        headers: data.cookieHeader ? { Cookie: data.cookieHeader } : undefined,
         tags: { endpoint: "login" }
     }) as K6TextRes;
 
     const setCookie = getSetCookieHeader(res);
+    const locationHeader = res.headers.Location || res.headers.location || "";
     const payload = (res.body && typeof res.body === "string") ? JSON.parse(res.body) as {
         type?: string;
         location?: string;
@@ -143,10 +149,19 @@ export default function (data: SetupData) {
         error?: { message?: string };
     } : {};
 
+    const isOkStatus = res.status === 200 || res.status === 303;
+    const hasRedirect = payload.type === "redirect" || String(locationHeader).includes("/in/overview");
+
+    if (DEBUG_FAILURES && (!isOkStatus || !setCookie.includes("authorization=") || !hasRedirect)) {
+        console.error(
+            `login failure status=${res.status} url=${data.actionUrl} location=${locationHeader} body=${String(res.body || "").slice(0, 200)}`
+        );
+    }
+
     check(res, {
-        "login call returns 200": (r) => r.status === 200,
+        "login call returns success": () => isOkStatus,
         "auth cookie is set": () => setCookie.includes("authorization="),
-        "result type is redirect": () => payload.type === "redirect",
-        "redirects to app": () => (payload.location || "").includes("/in/overview")
+        "result indicates redirect": () => hasRedirect,
+        "redirects to app": () => (payload.location || String(locationHeader)).includes("/in/overview")
     });
 }

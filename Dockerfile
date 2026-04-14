@@ -15,7 +15,15 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
-RUN --mount=type=secret,id=app_env sh -lc "set -a; . /run/secrets/app_env; set +a; bun run build"
+
+# Build-time placeholders only. Real secrets come from Kubernetes at runtime.
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/courseflow
+ARG JWT_ACCESS_SECRET=placeholder-access-secret
+ARG JWT_RESET_PASSWORD_SECRET=placeholder-reset-secret
+ENV DATABASE_URL=${DATABASE_URL}
+ENV JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+ENV JWT_RESET_PASSWORD_SECRET=${JWT_RESET_PASSWORD_SECRET}
+RUN bun run build
 
 FROM oven/bun:1 AS runner
 WORKDIR /app

@@ -1,0 +1,12 @@
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: courseflow-svc
+spec:
+  selector:
+    app: courseflow
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer  # or NodePort if local/minikube
