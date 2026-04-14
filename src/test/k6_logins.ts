@@ -15,6 +15,13 @@ type SetupData = {
     cookieHeader: string;
 };
 
+type LoginPayload = {
+    type?: string;
+    location?: string;
+    status?: number;
+    error?: { message?: string };
+};
+
 const BASE_URL = (__ENV.BASE_URL || "http://localhost:5173").replace(/\/$/, "");
 const USERS_FILE = __ENV.USERS_FILE || "seed_users.generated.json";
 const FALLBACK_EMAIL = __ENV.LOGIN_EMAIL;
@@ -72,6 +79,20 @@ function resolveActionUrl(baseUrl: string, action: string): string {
     if (action.startsWith("http://") || action.startsWith("https://")) return action;
     if (action.startsWith("/")) return `${baseUrl}${action}`;
     return `${baseUrl}/${action}`;
+}
+
+function parseLoginPayload(res: K6TextRes): LoginPayload {
+    const body = res.body;
+    if (!body || typeof body !== "string") return {};
+
+    const contentType = String(res.headers["Content-Type"] || res.headers["content-type"] || "");
+    if (!contentType.toLowerCase().includes("application/json")) return {};
+
+    try {
+        return JSON.parse(body) as LoginPayload;
+    } catch {
+        return {};
+    }
 }
 
 function getLoginUser(): LoginUser {
@@ -148,12 +169,7 @@ export default function (data: SetupData) {
 
     const setCookie = getSetCookieHeader(res);
     const locationHeader = res.headers.Location || res.headers.location || "";
-    const payload = (res.body && typeof res.body === "string") ? JSON.parse(res.body) as {
-        type?: string;
-        location?: string;
-        status?: number;
-        error?: { message?: string };
-    } : {};
+    const payload = parseLoginPayload(res);
 
     const isOkStatus = res.status === 200 || res.status === 303;
     const hasRedirect = payload.type === "redirect" || String(locationHeader).includes("/in/overview");
