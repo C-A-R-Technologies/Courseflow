@@ -14,10 +14,9 @@
         class="text-5xl font-bold tracking-tight md:text-6xl"
     />
     <p class="mt-6 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. A next-generation
-        platform transforming how students and institutions approach course
-        evaluation.
+        CourseFlow is a redesigned course evalution system based on the existing 
+        MyCourseEval system. Our goal is to improve the create a better user experience
+        for students and faculty by improving the webpage's design and functionality.
     </p>
     <div class="mt-8 flex gap-4">
         <Button href="/login" variant="default" size="lg">Get Started</Button>
@@ -34,10 +33,10 @@
     <p
         class="mt-4 text-center text-muted-foreground max-w-2xl mx-auto leading-relaxed"
     >
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad
-        minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-        ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-        voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+        Our mission with CourseFlow is to improve the course evaluation process for students
+        and faculty. We aim to provide a user-friendly platform that encourages honest feedback
+        while keeping the anonymity of students. We also want to make it easier for faculty to
+        access and analyze feedback that can drive meaningful improvements in course design.
     </p>
 </section>
 
@@ -55,9 +54,9 @@
                 </div>
                 <Card.Title class="text-lg">Real-Time Analytics</Card.Title>
                 <Card.Description>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Praesent commodo cursus magna, vel scelerisque nisl
-                    consectetur et.
+                    Instantly visualize avaialble courses and evaluations through the student
+                    dashboard. Faculty can also view course-wide metrics and areas for improvement
+                    through the faculty dashboard.
                 </Card.Description>
             </Card.Header>
         </Card.Root>
@@ -71,9 +70,8 @@
                 </div>
                 <Card.Title class="text-lg">Anonymous Feedback</Card.Title>
                 <Card.Description>
-                    Sed ut perspiciatis unde omnis iste natus error sit
-                    voluptatem accusantium doloremque laudantium, totam rem
-                    aperiam.
+                    Students can provide honest and constructive feedback in a secure,
+                    anonymous environment, ensuring transparency while protecting their identity.
                 </Card.Description>
             </Card.Header>
         </Card.Root>
@@ -87,9 +85,9 @@
                 </div>
                 <Card.Title class="text-lg">Actionable Insights</Card.Title>
                 <Card.Description>
-                    Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut
-                    odit aut fugit, sed quia consequuntur magni dolores eos qui
-                    ratione.
+                    Transform feedback into meaningful recommendations for course 
+                    improvements, helping faculty enhance the learning experience 
+                    and drive positive change in course design and delivery.
                 </Card.Description>
             </Card.Header>
         </Card.Root>
@@ -110,8 +108,8 @@
                 </div>
                 <h3 class="text-lg font-semibold">Enroll & Connect</h3>
                 <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                    Integer nec odio praesent libero sed cursus ante dapibus.
+                    Students log in using their academic accounts and are automatically
+                    connected to their enrolled courses for seamless evaluation access.
                 </p>
             </div>
             <div class="flex flex-col items-center text-center">
@@ -122,8 +120,9 @@
                 </div>
                 <h3 class="text-lg font-semibold">Evaluate Courses</h3>
                 <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                    laboris nisi ut aliquip ex ea commodo consequat.
+                    Students complete structured evaluations taylored to each course,
+                    providing valuable feedback on course content, professor performance,
+                    and the overall learning experience.
                 </p>
             </div>
             <div class="flex flex-col items-center text-center">
@@ -134,8 +133,9 @@
                 </div>
                 <h3 class="text-lg font-semibold">Drive Improvement</h3>
                 <p class="mt-2 text-sm text-muted-foreground leading-relaxed">
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur.
+                    Faculty can access student feedback through a dedicated dashboard 
+                    to identify strengths and areas for improvement, enabling for 
+                    improvements in future course designs.
                 </p>
             </div>
         </div>
@@ -148,9 +148,9 @@
             Ready to Transform Course Evaluation?
         </h2>
         <p class="mt-4 text-primary-foreground/80 leading-relaxed">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Join
-            thousands of institutions already using Courseflow to gather
-            meaningful student feedback.
+            Join institutions adopting CourseFlow to modernize feedback collection,
+            improve teaching effectiveness, and create better learning environments
+            for students.
         </p>
         <div class="mt-8 flex justify-center gap-4">
             <Button href="/login" variant="secondary" size="lg">
