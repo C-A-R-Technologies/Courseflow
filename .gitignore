@@ -26,3 +26,4 @@ vite.config.ts.timestamp-*
 src/lib/paraglide
 project.inlang/cache/
 docker-compose.yml
+src/test/seed_users.generated.json
