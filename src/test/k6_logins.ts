@@ -77,6 +77,7 @@ function getSetCookieHeader(res: K6TextRes) {
 
 function resolveActionUrl(baseUrl: string, action: string): string {
     if (action.startsWith("http://") || action.startsWith("https://")) return action;
+    if (action.startsWith("?")) return `${baseUrl}/login${action}`;
     if (action.startsWith("/")) return `${baseUrl}${action}`;
     return `${baseUrl}/${action}`;
 }
