@@ -157,16 +157,29 @@ export function setup() {
 
 export default function (data: SetupData) {
     const user = getLoginUser();
+
+    const pageRes = http.get(`${data.baseUrl}/login`, {
+        responseType: "text",
+        headers: { Accept: "text/html" }
+    }) as K6TextRes;
+
+    const freshCookie = getSetCookieHeader(pageRes);
+
+    const body = pageRes.body || "";
+    const m = body.match(/action="([^"]*\?\/remote=[^"]+)"/);
+    if (!m) { fail("Could not find form action"); return; }
+
+    const actionUrl = resolveActionUrl(data.baseUrl, m[1]);
+
     const headers: Record<string, string> = {
         Origin: data.baseUrl,
-        Referer: `${data.baseUrl}/login`
+        Referer: `${data.baseUrl}/login`,
     };
+    if (freshCookie) headers.Cookie = freshCookie;
 
-    if (data.cookieHeader) headers.Cookie = data.cookieHeader;
-
-    const res = http.post(data.actionUrl, {
+    const res = http.post(actionUrl, {
         email: user.email,
-        _password: user.password
+        _password: user.password,
     }, {
         redirects: 0,
         responseType: "text",
