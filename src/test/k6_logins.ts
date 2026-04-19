@@ -138,7 +138,7 @@ export function setup() {
     }
 
     const action = m[1];
-    const remoteMatch = action.match(/[?&]\/remote=([^&]+)/);
+    const remoteMatch = action.match(/[?&]\/remote=([^&/]+)/);
     if (!remoteMatch) {
         fail("Could not parse remote function id from login form action.");
     }
