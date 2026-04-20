@@ -10,9 +10,6 @@ type LoginUser = {
 };
 type SetupData = {
     baseUrl: string;
-    remoteId: string;
-    actionUrl: string;
-    cookieHeader: string;
 };
 
 type LoginPayload = {
@@ -75,11 +72,28 @@ function getSetCookieHeader(res: K6TextRes) {
     return raw || "";
 }
 
-function resolveActionUrl(baseUrl: string, action: string): string {
-    if (action.startsWith("http://") || action.startsWith("https://")) return action;
-    if (action.startsWith("?")) return `${baseUrl}/login${action}`;
-    if (action.startsWith("/")) return `${baseUrl}${action}`;
-    return `${baseUrl}/${action}`;
+function toFormUrlEncoded(values: Record<string, string>): string {
+    return Object.entries(values)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
+}
+
+function parseRemoteAction(body: string): string {
+    const m = body.match(/action="([^"]*\?\/remote=[^"]+)"/);
+    if (!m) {
+        fail("Could not find remote login form action on /login page.");
+    }
+    return m[1];
+}
+
+function buildRemoteEndpoint(baseUrl: string, action: string): string {
+    const remoteMatch = action.match(/[?&]\/remote=([^"&]+)/);
+    if (!remoteMatch) {
+        fail("Could not parse remote function id from login form action.");
+    }
+
+    const remoteId = remoteMatch[1];
+    return `${baseUrl}/_app/remote/${remoteId}`;
 }
 
 function parseLoginPayload(res: K6TextRes): LoginPayload {
@@ -131,27 +145,8 @@ export function setup() {
         "login page is 200": (r) => r.status === 200
     }) || fail("Could not load /login");
 
-    const body = pageRes.body || "";
-    const m = body.match(/action="([^"]*\?\/remote=[^"]+)"/);
-    if (!m) {
-        fail("Could not find remote login form action on /login page.");
-    }
-
-    const action = m[1];
-    const remoteMatch = action.match(/[?&]\/remote=([^&/]+)/);
-    if (!remoteMatch) {
-        fail("Could not parse remote function id from login form action.");
-    }
-
-    const remoteId = remoteMatch[1];
-    const actionUrl = resolveActionUrl(resolvedBaseUrl, action);
-    const cookieHeader = getSetCookieHeader(pageRes);
-
     return {
         baseUrl: resolvedBaseUrl,
-        remoteId,
-        actionUrl,
-        cookieHeader
     } satisfies SetupData;
 }
 
@@ -163,29 +158,54 @@ export default function (data: SetupData) {
         headers: { Accept: "text/html" }
     }) as K6TextRes;
 
-    const freshCookie = getSetCookieHeader(pageRes);
-
-    const body = pageRes.body || "";
-    const m = body.match(/action="([^"]*\?\/remote=[^"]+)"/);
-    if (!m) { fail("Could not find form action"); return; }
-
-    const actionUrl = resolveActionUrl(data.baseUrl, m[1]);
-
-    const headers: Record<string, string> = {
-        Origin: data.baseUrl,
-        Referer: `${data.baseUrl}/login`,
-    };
-    if (freshCookie) headers.Cookie = freshCookie;
-
-    const res = http.post(actionUrl, {
+    const action = parseRemoteAction(pageRes.body || "");
+    const actionUrl = buildRemoteEndpoint(data.baseUrl, action);
+    const body = toFormUrlEncoded({
         email: user.email,
         _password: user.password,
-    }, {
+    });
+
+    const headers: Record<string, string> = {
+        Accept: "*/*",
+        Origin: data.baseUrl,
+        Referer: `${data.baseUrl}/login`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-sveltekit-pathname": "/login",
+        "x-sveltekit-search": ""
+    };
+
+    let res = http.post(actionUrl, body, {
         redirects: 0,
         responseType: "text",
         headers,
         tags: { endpoint: "login" }
     }) as K6TextRes;
+
+    if (res.status === 405) {
+        const retryPageRes = http.get(`${data.baseUrl}/login`, {
+            responseType: "text",
+            headers: { Accept: "text/html" }
+        }) as K6TextRes;
+
+        const retryAction = parseRemoteAction(retryPageRes.body || "");
+        const retryActionUrl = buildRemoteEndpoint(data.baseUrl, retryAction);
+
+        const retryHeaders: Record<string, string> = {
+            Accept: "*/*",
+            Origin: data.baseUrl,
+            Referer: `${data.baseUrl}/login`,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "x-sveltekit-pathname": "/login",
+            "x-sveltekit-search": ""
+        };
+
+        res = http.post(retryActionUrl, body, {
+            redirects: 0,
+            responseType: "text",
+            headers: retryHeaders,
+            tags: { endpoint: "login", retry: "true" }
+        }) as K6TextRes;
+    }
 
     const setCookie = getSetCookieHeader(res);
     const locationHeader = res.headers.Location || res.headers.location || "";
@@ -196,7 +216,7 @@ export default function (data: SetupData) {
 
     if (DEBUG_FAILURES && (!isOkStatus || !setCookie.includes("authorization=") || !hasRedirect)) {
         console.error(
-            `login failure status=${res.status} url=${data.actionUrl} location=${locationHeader} body=${String(res.body || "").slice(0, 200)}`
+            `login failure status=${res.status} url=${actionUrl} location=${locationHeader} body=${String(res.body || "").slice(0, 200)}`
         );
     }
 
